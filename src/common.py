@@ -4,9 +4,15 @@ import matplotlib.pyplot as plt
 import mediapipe as mp
 from mediapipe.framework.formats import landmark_pb2
 from mediapipe import solutions
+import logging
 from PIL import Image
 
 from typing import Dict, List, Optional
+
+
+FORMAT = '%(asctime)s %(clientip)-15s %(user)-8s %(message)s'
+logging.basicConfig(format=FORMAT)
+logger = logging.getLogger()
 
 
 def find_model_name(name: str, l: List[Dict[str, str]]) -> Optional[str]:

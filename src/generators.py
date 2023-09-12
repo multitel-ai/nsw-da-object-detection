@@ -4,7 +4,7 @@ from typing import List
 from diffusers import StableDiffusionControlNetPipeline, ControlNetModel, UniPCMultistepScheduler
 import torch
 
-from logger import logger
+from common import logger
 
 
 class SDCN:

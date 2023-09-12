@@ -10,7 +10,7 @@ from tqdm import tqdm
 from pyiqa import create_metric
 from pyiqa.models.inference_model import InferenceModel
 
-from logger import logger
+from common import logger
 
 
 # In this file the approach to measure quality will be the extensive library
@@ -78,7 +78,7 @@ def is_generated_image(image_path: str) -> bool:
     return re.match(regex, image_wo_path)
 
 
-@hydra.main(version_base=None, config_path="conf", config_name="config")
+@hydra.main(version_base=None, config_path="../conf", config_name="config")
 def main(cfg : DictConfig) -> None:
     # BASE PATHS, please used these when specifying paths
     data_path = cfg['data_path']

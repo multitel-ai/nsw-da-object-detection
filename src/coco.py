@@ -10,7 +10,7 @@ from pathlib import Path
 from pycocotools.coco import COCO
 from tqdm import tqdm
 
-from logger import logger
+from common import logger
 
 
 def cocobox2yolo(img_path, coco_box):
@@ -71,7 +71,7 @@ def download_coco(data_path: Path,
 
     return image_path, annotations_path, bbx_path, caps_path
 
-@hydra.main(version_base=None, config_path="conf", config_name="config")
+@hydra.main(version_base=None, config_path="../conf", config_name="config")
 def main(cfg: DictConfig) -> None:
 
     # Get all paths

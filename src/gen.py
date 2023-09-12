@@ -10,13 +10,12 @@ import torch
 from common import *
 from extractors import *
 from generators import SDCN
-from logger import logger
 
 # Do not let torch decide on best algorithm (we know better!)
 torch.backends.cudnn.benchmark=False
 
 
-@hydra.main(version_base=None, config_path="conf", config_name="config")
+@hydra.main(version_base=None, config_path="../conf", config_name="config")
 def main(cfg : DictConfig) -> None:
 
     # BASE PATHS, please used these when specifying paths

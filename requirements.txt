@@ -14,4 +14,3 @@ transformers
 xformers
 wandb
 wget
-zipfile

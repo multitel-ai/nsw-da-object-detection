@@ -1,3 +1,3 @@
 #!/usr/bin/bash
 
-python3 "$1.py" ${@:2}
+python3 "src/$1.py" ${@:2}

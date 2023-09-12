@@ -3,7 +3,7 @@ import argparse
 import random
 import yaml
 
-from logger import logger
+from common import logger
 
 def create_mixte_dataset(real_images_dir: str, syn_images_dir: str, txt_dir: str, per_syn_data: float, n_file: int):
     """
@@ -58,8 +58,8 @@ def create_mixte_dataset(real_images_dir: str, syn_images_dir: str, txt_dir: str
             for image in real_images:
                 name = str(os.path.join(real_images_path, image)) + '\n'
                 f.write(name)
-            
-    yaml_dir = os.path.join(os.path.join(txt_dir, 'coco' +'.yaml'))  
+
+    yaml_dir = os.path.join(os.path.join(txt_dir, 'coco' +'.yaml'))
     create_yaml_file(txt_dir, yaml_dir)
 
 

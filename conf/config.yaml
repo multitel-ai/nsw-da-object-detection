@@ -11,15 +11,10 @@ ml:
   val_nb: 300
   test_nb: 300
   train_nb: 250
-  augmentation_percent: 0.1 # controls all aug percents parameters everywhere
+  augmentation_percent: 0
   epochs: 300
-  wandb:
-    entity: sdcn-nantes
-    project: sdcn-shit-testing
-  sampling:
-    enable: false
-    metric: brisque # brisque (smaller is better), dbcnn (bigger is better), ilniqe (smaller is better)
-    sample: best # to take smaller or bigger values is decided depending the metric
+  augmentation_percent_baseline: 0
+  baseline: True
 
 prompt:
   template: vocabulary
@@ -43,12 +38,13 @@ prompt:
 model:
   use_captions: 1
   use_labels: 0
-  augmentation_percent: 0 # not used at the moment anywhere
+  augmentation_percent: 0
   sd: runwayml/stable-diffusion-v1-5
   cn_use: controlnet_segmentation
   cn:
     # Segmentation
     - controlnet_segmentation: lllyasviel/sd-controlnet-seg
+    
     # Canny
     - lllyasviel_canny: lllyasviel/sd-controlnet-canny
     - lllyasviel_scribble_canny: lllyasviel/sd-controlnet-scribble
@@ -77,6 +73,11 @@ model:
 
 iqa:
   device: cuda
-  metrics: [brisque, dbcnn, nima, ilniqe]
-  # available metrics : brisque, clipiqa+, dbcnn, ilniqe, niqe, nima, cnniqa, nrqm, pi, ilniqe, niqe
-  # read more on : https://github.com/chaofengc/IQA-PyTorch/blob/main/docs/ModelCard.md
+  metrics: ['brisque', 'clipiqa+', 'dbcnn', 'niqe', nima] # 'ilniqe',
+  abled: False
+  metric: 'clipiqa+' #nima
+
+active:
+  abled: False
+  rounds: 5
+  sel: 125  # 50 percent

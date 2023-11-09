@@ -1,6 +1,5 @@
 import cv2
 import numpy as np
-import torch
 
 from common import draw_landmarks_on_image
 from controlnet_aux import OpenposeDetector
@@ -11,9 +10,10 @@ from mediapipe import ImageFormat
 from PIL import Image
 from torchvision.transforms import ToPILImage
 from typing import Tuple
-
-import sys
+import torch
+import sys 
 import os
+
 sys.path.append(os.path.join(os.getcwd(), "ultralytics"))
 from ultralytics import YOLO
 
@@ -46,24 +46,23 @@ class Extractor:
         elif 'mediapipe_face' in control_model:
             return MediaPipeFace(**kwargs)
         elif 'segmentation' in control_model:
-            return SegmentationYoloV8(**kwargs)
+            return Segmentation(**kwargs)
 
 
-class SegmentationYoloV8:
+class Segmentation:
     def __init__(self, **kwargs):
         self.model = YOLO("yolov8m-seg.pt")
 
     def extract(self, image: Image) -> Image:
         image = np.array(image)
 
-        # Extract mask from prediction
         results = self.model.predict(image)
-        seg_image = results[0].masks[0].data[0]
-
-        # stack tensor to simulate RGB format
-        seg_image = torch.stack(3 * (seg_image,))
-        seg_image = ToPILImage()(seg_image)
-
+        result = results[0].masks[0].data[0]
+        
+        # seg_image = torch.t(result)
+        seg_image = result[None, None, ...] # ToPILImage()(result[None, :])
+        seg_image = torch.concat((seg_image, seg_image, seg_image), axis=1) 
+        
         return seg_image
 
 

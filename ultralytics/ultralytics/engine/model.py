@@ -312,7 +312,7 @@ class Model:
         args = {**self.overrides, **custom, **kwargs, 'mode': 'export'}  # highest priority args on the right
         return Exporter(overrides=args, _callbacks=self.callbacks)(model=self.model)
 
-    def train(self, trainer=None, **kwargs):
+    def train(self, trainer=None, sampling=0, **kwargs):
         """
         Trains the model on a given dataset.
 
@@ -337,6 +337,7 @@ class Model:
         if not args.get('resume'):  # manually set model only if not resuming
             self.trainer.model = self.trainer.get_model(weights=self.model if self.ckpt else None, cfg=self.model.yaml)
             self.model = self.trainer.model
+        self.trainer.sampling = sampling
         self.trainer.hub_session = self.session  # attach optional HUB session
         self.trainer.train()
         # Update model and cfg after training

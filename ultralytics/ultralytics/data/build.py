@@ -123,7 +123,7 @@ def check_source(source):
     elif isinstance(source, LOADERS):
         in_memory = True
     elif isinstance(source, (list, tuple)):
-        source = autocast_list(source)  # convert all list elements to PIL or np arrays
+        # source = autocast_list(source)  # convert all list elements to PIL or np arrays
         from_img = True
     elif isinstance(source, (Image.Image, np.ndarray)):
         from_img = True
@@ -151,6 +151,7 @@ def load_inference_source(source=None, imgsz=640, vid_stride=1, buffer=False):
     source, webcam, screenshot, from_img, in_memory, tensor = check_source(source)
     source_type = source.source_type if in_memory else SourceTypes(webcam, screenshot, from_img, tensor)
 
+    from_img = False
     # Dataloader
     if tensor:
         dataset = LoadTensor(source)

@@ -15,15 +15,15 @@ from common import logger
 
 def cocobox2yolo(img_path, coco_box):
     I = cv2.imread(img_path)
-    image_height, image_width = I.shape[0:2]
+    image_hight, image_width = I.shape[0:2]
 
-    [left, top, box_width, box_height] = coco_box
+    [left, top, box_width, box_hight] = coco_box
     x_center = (left + box_width / 2) / image_width
-    y_center = (top + box_height / 2) / image_height
+    y_center = (top + box_hight / 2) / image_hight
 
     box_width /= image_width
-    box_height /= image_height
-    yolo_box = [x_center, y_center, box_width, box_height]
+    box_hight /= image_hight
+    yolo_box = [x_center, y_center, box_width, box_hight]
 
     return yolo_box
 
@@ -49,7 +49,7 @@ def download_coco(data_path: Path,
     path_to_data_zip = data_path / data_zip_name
     path_to_annotations_zip = data_path / annotations_zip_name
 
-    data_url = 'https://cloud.deepilia.com/s/BQcq8nQxFjizdFz/download/Coco_1FullPerson.zip'
+    data_url = 'https://transfer.sh/FW8MjTFjDv/Coco_1FullPerson.zip'
     annotations_url = 'http://images.cocodataset.org/annotations/annotations_trainval2017.zip'
 
     # Only perform the work if necessary
@@ -91,8 +91,7 @@ def main(cfg: DictConfig) -> None:
     annFile = annotations_path / f'instances_{coco_version}.json'
     annFile_keypoints = annotations_path / f'person_keypoints_{coco_version}.json'
     annFile_captions = annotations_path / f'captions_{coco_version}.json'
-    
-
+    """
     coco = COCO(annFile.absolute())
     coco_keypoints = COCO(annFile_keypoints.absolute())
     coco_captions = COCO(annFile_captions.absolute())
@@ -126,7 +125,7 @@ def main(cfg: DictConfig) -> None:
         with open(captions_text_path, 'w') as file:
             captions = [caps['caption'] for caps in caps_anns]
             file.write('\n'.join(captions))
-    
+    """
     # Prepare the data for training and validation
     real_data_images = REAL_DATA_PATH / 'images'
     real_data_labels = REAL_DATA_PATH / 'labels'
@@ -157,6 +156,7 @@ def main(cfg: DictConfig) -> None:
 
         if counter > VAL_NB + TEST_NB + TRAIN_NB:
             break
+        counter += 1
 
         name =  file_name.split('.')[0]
         img_file = name + '.jpg'
@@ -166,17 +166,15 @@ def main(cfg: DictConfig) -> None:
         label = bbx_path / txt_file
         caption = caps_path / txt_file
 
-        # print(image, label, caption)
-
         if os.path.isfile(image) and os.path.isfile(label) and os.path.isfile(caption):
-            if counter < VAL_NB:
-                images_dir = Path(str(real_data_images).replace(f'{os.sep}real{os.sep}', f'{os.sep}val{os.sep}'))
-                labels_dir = Path(str(real_data_labels).replace(f'{os.sep}real{os.sep}', f'{os.sep}val{os.sep}'))
-                test_dir = Path(str(real_data_captions).replace(f'{os.sep}real{os.sep}', f'{os.sep}val{os.sep}'))
-            elif counter < VAL_NB + TEST_NB:
-                images_dir = Path(str(real_data_images).replace(f'{os.sep}real{os.sep}', f'{os.sep}test{os.sep}'))
-                labels_dir = Path(str(real_data_labels).replace(f'{os.sep}real{os.sep}', f'{os.sep}test{os.sep}'))
-                test_dir = Path(str(real_data_captions).replace(f'{os.sep}real{os.sep}', f'{os.sep}test{os.sep}'))
+            if counter <= VAL_NB:
+                images_dir = Path(str(real_data_images).replace('/real/', '/val/'))
+                labels_dir = Path(str(real_data_labels).replace('/real/', '/val/'))
+                test_dir = Path(str(real_data_captions).replace('/real/', '/val/'))
+            elif counter <= VAL_NB + TEST_NB:
+                images_dir = Path(str(real_data_images).replace('/real/', '/test/'))
+                labels_dir = Path(str(real_data_labels).replace('/real/', '/test/'))
+                test_dir = Path(str(real_data_captions).replace('/real/', '/test/'))
             else:
                 images_dir = real_data_images
                 labels_dir = real_data_labels
@@ -190,7 +188,6 @@ def main(cfg: DictConfig) -> None:
             shutil.copy(label, labels_dir / txt_file)
             shutil.copy(caption, test_dir / txt_file)
 
-            counter += 1
 
 if __name__ == "__main__":
    main()

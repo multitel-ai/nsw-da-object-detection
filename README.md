@@ -99,75 +99,6 @@ This are of course in the `config.yaml` file and can be changed statically or dy
 <img src="docs/images/iqa_measure.png" />
 
 
-### iqa paper 
-
-In this file the approach to measure quality will be the extensive library
-IQA-Pytorch: https://github.com/chaofengc/IQA-PyTorch
-Read also the paper: https://arxiv.org/pdf/2208.14818.pdf
-
-There are basically two approaches to measure image quality
-- full reference: compare againts a real pristine image
-- no reference: compute metrics following a learned opinion
-
-Because images are generated there is no reference image to compare to. We
-will be using with the no-reference metrics
-
-Note that methods using here are agnostic to the content of the image, no
-subjective or conceptual score is given.
-Measures generated here only give an idea of how 'good looking' the images
-are.
-
-Methods used:
-- brisque: https://www.sciencedirect.com/science/article/abs/pii/S0730725X17301340
-- dbccn: https://arxiv.org/pdf/1907.02665v1.pdf
-- niqe: https://live.ece.utexas.edu/research/quality/nrqa.html
-
-
-
-dbcnn is good for: blur, contrast distortion, white and pink noise, dithering, over and under exposure
-brisque is good for: distortion, luminance and blur
-ilniqe: distortion, blur and compression distortion
-
-Note that metrics have each different ranges: [0, 1], [0, +inf] and also sometimes less is better
-and sometimes more is better, it would be a mistake to try to rescale or invert them.
-It is better to treat each separately.
-
-There is file created in `data/iqa/<cn_use>_iqa.json` with the following structure:
-
-```
-{
-    "image_paths": [
-        "data/generated/controlnet_segmentation/000000000474_1.png",
-        "data/generated/controlnet_segmentation/000000000474_2.png",
-        "data/generated/controlnet_segmentation/000000000474_3.png",
-        "data/generated/controlnet_segmentation/000000000474_4.png",
-        "data/generated/controlnet_segmentation/000000000474_5.png"
-    ],
-    "name": "controlnet_segmentation",
-    "brisque": [
-        20.71453857421875,
-        11.63690185546875,
-        17.65740966796875,
-        5.10711669921875,
-        32.71502685546875
-    ],
-    "dbcnn": [
-        0.7001792192459106,
-        0.6730189323425293,
-        0.5987531542778015,
-        0.5892908573150635,
-        0.5235083699226379
-    ],
-    "ilniqe": [
-        27.35899873000946,
-        34.540625520909074,
-        26.03838433381286,
-        25.595288318528816,
-        34.6185153006446
-    ]
-}
-```
-
 
 ## Create YOLO Dataset and Train :
 
@@ -187,12 +118,4 @@ Launch the training !
 
 ```
 ./run train
-```
-
-### Other 
-
-- NLP is used in the Flickr30K script in order to extract good annotations from captions, run this for it to work :
-
-```
-python -m spacy download en_core_web_sm
 ```

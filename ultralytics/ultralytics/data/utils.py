@@ -33,19 +33,19 @@ def img2label_paths(img_paths):
     """Define label paths as a function of image paths."""
     label_paths = []
     for image in img_paths: 
-        if f'{os.sep}real{os.sep}' in image:
-            base_path = image.split(f'{os.sep}real{os.sep}')[0]
-        elif f'{os.sep}test{os.sep}' in image:
-            base_path = image.split(f'{os.sep}test{os.sep}')[0]
-        elif f'{os.sep}val{os.sep}' in image:
-            base_path = image.split(f'{os.sep}val{os.sep}')[0]
-        elif f'{os.sep}generated{os.sep}' in image:
-            base_path = image.split(f'{os.sep}generated{os.sep}')[0]
+        if 'real' in image:
+            base_path = image.split('real')[0]
+        elif 'test' in image:
+            base_path = image.split('test')[0]
+        elif 'val' in image:
+            base_path = image.split('val')[0]
+        elif 'generated' in image:
+            base_path = image.split('generated')[0]
             
         label_name = image.split(f'{os.sep}')[-1].split('.')[0].split('_')[0] + '.txt'
-        if f'{os.sep}val{os.sep}' in image:
+        if 'val' in image:
             label_path = Path(base_path) / 'val' / 'labels' / label_name
-        elif f'{os.sep}test{os.sep}' in image:
+        elif 'test' in image:
             label_path = Path(base_path) / 'test' / 'labels' / label_name
         else:
             label_path = Path(base_path) / 'real' / 'labels' / label_name

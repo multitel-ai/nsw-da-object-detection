@@ -18,6 +18,7 @@ from PIL import Image
 from ultralytics.data.utils import IMG_FORMATS, VID_FORMATS
 from ultralytics.utils import LOGGER, is_colab, is_kaggle, ops
 from ultralytics.utils.checks import check_requirements
+from ultralytics.data.augment import LetterBox
 
 
 @dataclass
@@ -230,6 +231,7 @@ class LoadImages:
         if self.nf == 0:
             raise FileNotFoundError(f'No images or videos found in {p}. '
                                     f'Supported formats are:\nimages: {IMG_FORMATS}\nvideos: {VID_FORMATS}')
+        self.pad = LetterBox(new_shape=(640, 640), scaleup=False)
 
     def __iter__(self):
         """Returns an iterator object for VideoStream or ImageFolder."""
@@ -265,6 +267,7 @@ class LoadImages:
             # Read image
             self.count += 1
             im0 = cv2.imread(path)  # BGR
+            im0 = self.pad(image=im0)
             if im0 is None:
                 raise FileNotFoundError(f'Image Not Found {path}')
             s = f'image {self.count}/{self.nf} {path}: '
@@ -373,8 +376,16 @@ def autocast_list(source):
     """
     files = []
     for im in source:
-        if isinstance(im, (str, Path)):  # filename or uri
-            files.append(Image.open(requests.get(im, stream=True).raw if str(im).startswith('http') else im))
+        if isinstance(im, (str, Path)):  # filename or url
+            if not str(im).startswith('http'):
+                with Image.open(im) as _im:
+                    if _im.mode != 'RGB':
+                        _im = _im.convert('RGB')
+                    im = np.asarray(_im)[:, :, ::-1]
+                    im = np.ascontiguousarray(im)
+            else:
+                Image.open(requests.get(im, stream=True).raw)
+            files.append(im)
         elif isinstance(im, (Image.Image, np.ndarray)):  # PIL or np Image
             files.append(im)
         else:

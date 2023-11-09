@@ -1,7 +1,11 @@
+
 import hydra
 import matplotlib.pyplot as plt
 import os
 import re
+import sys
+import uuid
+import yaml
 
 from omegaconf import DictConfig
 from pathlib import Path
@@ -13,7 +17,12 @@ from typing import List, Optional, Tuple
 from common import logger, find_common_prefix, find_common_suffix
 import numpy as np
 import seaborn as sns
+from sklearn.preprocessing import StandardScaler
+import pandas as pd
 
+# TODO: fix this, I do not like this at all
+sys.path.append(os.path.join(os.getcwd(), "ultralytics")) 
+from ultralytics import YOLO
 
 # In this file the approach to measure quality will be the extensive library
 # IQA-Pytorch: https://github.com/chaofengc/IQA-PyTorch
@@ -98,62 +107,161 @@ def main(cfg : DictConfig) -> None:
     # keep track of what feature was used for generation too in the name
     base_path = os.path.join(*data_path['base']) if isinstance(data_path['base'], list) else data_path['base']
     GEN_DATA_PATH =  Path(base_path) / data_path['generated'] / cfg['model']['cn_use']
-    LOG_PATH = Path(base_path) / data_path['real'] 
+    LOG_PATH = Path(base_path) / data_path['real']
+    print("LOG PATH", LOG_PATH)
+    cns = ['lllyasviel_canny', 'lllyasviel_openpose', 'crucible_mediapipe_face', 'controlnet_segmentation']
+    all_paths = [Path(base_path) / data_path['real'] / "images", Path(base_path) / data_path['real'] / "coco/Coco_1FullPerson"] + [Path(base_path) / data_path['generated'] / cn for cn in cns]
 
-    logger.info(f'Reading images from {GEN_DATA_PATH}')
+    _cns = ["real", "real_full"] + cns
+    overall_scores = {"score":[], "metric":[], "cn":[], "path":[]}
+    for path in tqdm(all_paths, unit="folder"):
+        logger.info(f'Reading images from {path}')
 
-    image_paths = [
-        str(GEN_DATA_PATH / image_path)
-        for image_path in os.listdir(str(GEN_DATA_PATH)) if is_generated_image(image_path)
-    ]
-    image_paths.sort()
+        image_paths = [
+            str(path / image_path)
+            for image_path in os.listdir(str(path)) if True # is_generated_image(image_path)
+        ]
+        image_paths.sort()
 
-    prefix_len = len(find_common_prefix(image_paths))
-    suffix_len = len(find_common_suffix(image_paths))
-    image_names = [image_path[prefix_len:-suffix_len] for image_path in image_paths]
+        print(path, len(image_paths), len(os.listdir(str(path))) )
 
-   # We are hard-coding the No-Reference methods for the moment.
-   # See reasonment above.
-    METRIC_MODE = 'NR'
+        prefix_len = len(find_common_prefix(image_paths))
+        suffix_len = len(find_common_suffix(image_paths))
+        image_names = [image_path[prefix_len:-suffix_len] for image_path in image_paths]
 
-    metrics = [metric.lower() for metric in cfg['iqa']['metrics']]
-    if not metrics:
-        metrics = ['brisque']
-    device = cfg['iqa']['device']
+       # We are hard-coding the No-Reference methods for the moment.
+       # See reasonment above.
+        METRIC_MODE = 'NR'
 
-    logger.info(f'Using a {METRIC_MODE} approach, metrics: {metrics} and device: {device}')
+        metrics = [metric.lower() for metric in cfg['iqa']['metrics']]
+        if not metrics:
+            metrics = ['brisque']
+        device = cfg['iqa']['device']
 
-    overall_scores = {"score":[], "metric":[]}
-    for metric_name in tqdm(metrics):
-        logger.info(f'Measure using {metric_name} metric.')
+        logger.info(f'Using a {METRIC_MODE} approach, metrics: {metrics} and device: {device}')
 
-        iqa_model = create_metric(metric_name, device=device, metric_mode=METRIC_MODE)
-        scores, avg_score = measure_several_images(iqa_model, image_paths)
-        scores, avg_score = adapt_metric(metric_name, scores, avg_score)
+        cn = _cns[0] ; _cns = _cns[1:]
+        for metric_name in tqdm(metrics, unit="metric"): 
+            logger.info(f'Measure using {metric_name} metric.')
 
-        scores, avg_score = normalize(scores)
+            iqa_model = create_metric(metric_name, device=device, metric_mode=METRIC_MODE)
+            scores, avg_score = measure_several_images(iqa_model, image_paths)
+            scores_, avg_score = adapt_metric(metric_name, scores, avg_score)
 
-        overall_scores["score"] = [*overall_scores["score"], *scores]
-        overall_scores["metric"] = [*overall_scores["metric"], *[metric_name for _ in range(len(scores))] ]
+            scores, avg_score = normalize(scores_)
 
-    overall_scores["score"] = np.array(overall_scores["score"])
-    overall_scores["metric"] = np.array(overall_scores["metric"])
+            overall_scores["score"] = [*overall_scores["score"], *scores_]
+            overall_scores["metric"] = [*overall_scores["metric"], *[metric_name for _ in range(len(scores))]]
+            overall_scores["cn"] = [*overall_scores["cn"], *[cn for _ in range(len(scores))]]
+            overall_scores["path"] = [*overall_scores["path"], *os.listdir(str(path))] # *image_names]
+        overall_scores["score"] = np.array(overall_scores["score"])
+        overall_scores["metric"] = np.array(overall_scores["metric"])
+        overall_scores["cn"] = np.array(overall_scores["cn"])
+        overall_scores["path"] = np.array(overall_scores["path"])
+       # with open('/auto/home/users/t/g/tgodelai/after_nantes/nsw-da-object-detection/data/iqa_values.pkl', 'wb') as fp:
+       #     pickle.dump(overall_scores, fp)
+       #     print("dictionary saved successfully")
+        global_avg_score = np.zeros(len(cns))
+        for metric_name in metrics:
+            for i, cn in enumerate(cns):
+                scores = overall_scores["score"][overall_scores["metric"]==metric_name][overall_scores["cn"][overall_scores["metric"]==metric_name]==cn]
+                avg_score = scores.mean(); print("Avg score: metric, cn", metric_name, cn, scores)
+                global_avg_score[i] += avg_score
+            # plt.plot(image_names, scores, label = f'Avg score of {metric_name}: {avg_score}')
+        global_avg_score = global_avg_score / len(metrics)
 
-    global_avg_score = 0
-    for metric_name in overall_scores:
-        scores = overall_scores["score"][overall_scores["metric"]==metric_name]
-        avg_score = scores.mean()
-        global_avg_score += avg_score
-        # plt.plot(image_names, scores, label = f'Avg score of {metric_name}: {avg_score}')
-    global_avg_score = global_avg_score / len(metrics)
-    
+    # Figure
     fig, ax = plt.subplots(1,1)
-    ax = sns.boxplot(data=overall_scores, x="metric", y="score", ax=ax)
-    plt.title(f'Dataset: {os.path.basename(str(GEN_DATA_PATH))}\nGlobal avg score: {global_avg_score}',loc='left')
+    ax = sns.boxplot(data=overall_scores, x="metric", y="score", ax=ax, hue='cn')
+    sns.move_legend(ax, "upper left", bbox_to_anchor=(1, 1))
+    #plt.title(f'Dataset: {os.path.basename(str(GEN_DATA_PATH))}\nGlobal avg score: {global_avg_score}',loc='left')
+    plt.title("Quality comparison between ControlNet models used to generate images")
     plt.legend()
-    file_name = "metrics" + cfg['model']['cn_use'] + ".png"
+    #file_name = "metrics" + cfg['model']['cn_use'] + ".png"
+    file_name = "comparison_metrics_all_models.png"
     plt.savefig(LOG_PATH / file_name)
+    df = pd.DataFrame.from_dict(overall_scores)
+    path = LOG_PATH / 'iqa_values.csv'
+    df.to_csv(path)
 
+@hydra.main(version_base=None, config_path=f"..{os.sep}conf", config_name="config")
+def main_2(cfg: DictConfig) -> None:
+    data = cfg['data'] ; active = cfg['active'] ;  iqa = cfg['iqa']
+    base_path = Path(data['base']) 
+    GEN_DATA_PATH =  Path(base_path) / data['generated'] / cfg['model']['cn_use'] 
+    REAL_DATA = Path(base_path) / data['real']
+    
+    run = "" if cfg['ml']['augmentation_percent']==0 else cfg['model']['cn_use'] + str(cfg['ml']['augmentation_percent'])
+    data_yaml_path = "/auto/home/users/t/g/tgodelai/after_nantes/nsw-da-object-detection/" / REAL_DATA / 'data.yaml'
+    model_path = "/auto/home/users/t/g/tgodelai/after_nantes/nsw-da-object-detection/" / Path(base_path) / str( cfg['model']['cn_use'] + str(cfg['ml']['augmentation_percent']) + ".pt")
+    print("model_path", model_path)
+    cn_use = cfg['model']['cn_use']
+    aug_percent = cfg['model']['augmentation_percent']
+    name = f"{uuid.uuid4().hex.upper()[0:6]}_{cn_use}_{aug_percent}_iqa"
+    #name = f"{uuid.uuid4().hex.upper()[0:6]}_{cn_use}_{aug_percent}_{AL}" if active["abled"] else name = f"{uuid.uuid4().hex.upper()[0:6]}_{cn_use}_{aug_percent}"
+    #name = f"{uuid.uuid4().hex.upper()[0:6]}_{cn_use}_{aug_percent}_{iqa}" if iqa["abled"] else name = f"{uuid.uuid4().hex.upper()[0:6]}_{cn_use}_{aug_percent}" 
+
+    #data_yaml_path = str(data_yaml_path.absolute())
+    if iqa["abled"]:
+        image_paths = ["/auto/home/users/t/g/tgodelai/after_nantes/nsw-da-object-detection/" + str(GEN_DATA_PATH / im) for im in os.listdir(GEN_DATA_PATH)]
+        image_paths.sort()
+        mean = False
+        if mean: 
+           iqa_value_path = "/auto/home/users/t/g/tgodelai/after_nantes/nsw-da-object-detection/data/real/iqa_values.csv" 
+           scores = pd.read_csv(iqa_value_path)
+           scores = scores[scores['cn']==cn_use] 
+           scores_reshape = scores.pivot(index=scores.columns.tolist()[-1], columns='metric', values='score')
+           scores_reshape = scores_reshape.reset_index()
+           scale = StandardScaler()
+           all_scores_scaled = scale.fit_transform(scores_reshape)
+           mean_scores = np.mean(all_scores_scaled, axis=1)
+           sel = int(cfg['ml']['train_nb'] * cfg['model']['augmentation_percent'])
+           selected_idx = np.argsort(mean_scores)[-sel:]
+           selected_images = list(np.array(image_paths)[selected_idx]) 
+        else: 
+           metric = iqa['metric']
+           device = iqa['device']
+           iqa_model = create_metric(metric, device=device, metric_mode='NR')
+           scores, avg_score = measure_several_images(iqa_model, image_paths)
+           #scores, avg_score = adapt_metric(metric, scores, avg_score)
+           #scores, avg_score = normalize(scores)
+           sel = int(cfg['ml']['train_nb'] * cfg['model']['augmentation_percent'])
+           selected_idx = np.argsort(scores)[-sel:] #-sel:, :sel 
+           selected_images = list(np.array(image_paths)[selected_idx])
+        with open(data_yaml_path, 'r') as _file:
+            used_data_ = yaml.safe_load(_file) 
+        train = used_data_["train"]
+        with open(train, 'r') as _file: 
+            used_data = _file.readlines()
+        U = [u.replace('\n','') for u in used_data]
+        #used_data = [u.split("/")[-1] for u in used_data]
+        print("U", U); all_data = U + selected_images
+        print("all_data", all_data)
+
+        fold = '/'.join(str(data_yaml_path).split('/')[:-1]) + f"/iqa_{cfg['model']['cn_use']}_{cfg['model']['augmentation_percent']}" #f"active_$
+        if not os.path.isdir(fold): 
+            os.makedirs(fold)
+        data_yaml_path2 = f"{fold}/data_iqa_{cfg['model']['cn_use']}_{cfg['model']['augmentation_percent']}.yaml"
+        os.system(f"cp {data_yaml_path} {data_yaml_path2}")
+        # _data_yaml_path2 = fold + "/" + str(_data_yaml_path2).split('/')[-1] 
+        new_train = data_yaml_path2.replace("data_", "train_").replace("yaml", "txt")
+        os.system(f"cp {used_data_['train']} {new_train}")
+        print("new train", new_train)
+        used_data_["train"] = new_train
+        with open(data_yaml_path2, 'w') as _file:
+            yaml.dump(used_data_, _file)
+        with open(new_train, 'w') as _file: 
+            _file.write("\n".join(all_data))
+
+        model = YOLO("yolov8n.yaml")
+        model.model.query = False
+        model.train(
+            data = str(Path(data_yaml_path2).absolute()),
+            epochs = cfg['ml']['epochs'],
+            project = 'sdcn',
+            # entity = 'sdcn-nantes',
+            name = name
+        )
 
 if __name__ == '__main__':
-    main()
+    main_2()

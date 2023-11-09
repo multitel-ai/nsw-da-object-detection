@@ -4,6 +4,7 @@ import contextlib
 from copy import deepcopy
 from pathlib import Path
 
+import numpy as np
 import torch
 import torch.nn as nn
 
@@ -57,6 +58,10 @@ class BaseModel(nn.Module):
         Returns:
             (torch.Tensor): The last output of the model.
         """
+        try:
+            self.query = self.query 
+        except Exception:
+            self.query = False
         if augment:
             return self._predict_augment(x)
         return self._predict_once(x, profile, visualize)
@@ -73,16 +78,33 @@ class BaseModel(nn.Module):
         Returns:
             (torch.Tensor): The last output of the model.
         """
+        features = None
         y, dt = [], []  # outputs
-        for m in self.model:
+        for i, m in enumerate(self.model):
             if m.f != -1:  # if not from previous layer
                 x = y[m.f] if isinstance(m.f, int) else [x if j == -1 else y[j] for j in m.f]  # from earlier layers
             if profile:
                 self._profile_one_layer(m, x, dt)
+            if False:
+                if isinstance(x,list):
+                    print(i, m, len(x))
+                    for xx in  x:
+                        print(xx.shape)
+                else:
+                    print(i, m, x.shape)
             x = m(x)  # run
+            if self.query and i==9:
+                features = x.clone()
             y.append(x if m.i in self.save else None)  # save output
             if visualize:
                 feature_visualization(x, m.type, m.i, save_dir=visualize)
+        
+        if self.query:
+            features = features.detach().cpu().numpy()
+            # print(np.shape(features))
+            features = np.array([f.flatten() for f in features])
+            return features
+        
         return x
 
     def _predict_augment(self, x):
@@ -233,6 +255,7 @@ class DetectionModel(BaseModel):
         self.model, self.save = parse_model(deepcopy(self.yaml), ch=ch, verbose=verbose)  # model, savelist
         self.names = {i: f'{i}' for i in range(self.yaml['nc'])}  # default names dict
         self.inplace = self.yaml.get('inplace', True)
+        self.query = False
 
         # Build strides
         m = self.model[-1]  # Detect()

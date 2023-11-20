@@ -1,3 +1,6 @@
+import sys
+sys.path.append('/home/ucl/elen/tgodelai/.local/lib/python3.9/site-packages') ; sys.path.pop(5) 
+
 import glob
 import hydra
 import os

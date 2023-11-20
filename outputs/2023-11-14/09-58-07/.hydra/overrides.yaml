@@ -1,0 +1,9 @@
+- model.augmentation_percent=5.0
+- ml.augmentation_percent=5.0
+- model.cn_use=controlnet_segmentation
+- active.abled=False
+- logs.sampling=random
+- ml.epochs=300
+=300
+- logs.experiment=active
+- logs.sampling=confidence

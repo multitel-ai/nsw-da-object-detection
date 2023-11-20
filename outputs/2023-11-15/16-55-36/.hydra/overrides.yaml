@@ -1,0 +1,5 @@
+- plot.control_net=lllyasviel_canny
+- plot.plot_1=True
+- plot.name=random_sampling.png
+- plot.csv_path=result2.csv
+- plot.plot_from_csv=True

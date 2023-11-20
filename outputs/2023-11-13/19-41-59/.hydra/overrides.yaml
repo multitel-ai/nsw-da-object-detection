@@ -1,0 +1,9 @@
+- model.augmentation_percent=2.0
+- iqa.abled=True
+- ml.augmentation_percent=2.0
+- model.cn_use=controlnet_segmentation
+- active.abled=False
+- logs.sampling=clipiqa+_best
+- logs.experiment=iqa
+- iqa.metric=clipiqa+
+- ml.epochs=300

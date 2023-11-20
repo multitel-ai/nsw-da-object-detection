@@ -1,0 +1,6 @@
+- model.augmentation_percent=0.0
+- ml.augmentation_percent=0.0
+- model.cn_use=lllyasviel_canny
+- active.abled=True
+- active.sampling=coreset
+- ml.epochs=300

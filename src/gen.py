@@ -31,7 +31,6 @@ def main(cfg : DictConfig) -> None:
 
     # Create the generated directory if necessary.
     (GEN_data).mkdir(parents=True, exist_ok=True)
-    already_generated = [a.split(".")[0] for a in os.listdir(GEN_data)]
 
     formats = data['image_formats']
     real_images = []
@@ -41,8 +40,6 @@ def main(cfg : DictConfig) -> None:
         ]
     real_images.sort()
     real_images_path = real_images
-    if len(already_generated)>=1:
-        real_images_path = [r for r in real_images_path if not r.split(f"{os.sep}")[-1].split(".")[0] in already_generated]
     real_dataset_size = len(real_images_path)
 
     prompt = cfg['prompt']
@@ -69,7 +66,8 @@ def main(cfg : DictConfig) -> None:
     use_labels = bool(model_data['use_labels'])
 
     if use_captions:
-        real_captions_path = [str(r).replace("images","captions").replace("jpg","txt") for r in real_images_path]
+        real_captions_path = glob.glob(str(real_captions_path.absolute()) + f'/*')
+        real_captions_path.sort()
         if len(real_captions_path) != real_dataset_size:
             raise Exception("Cannot use a captions dataset of different size!")
         logger.info("Using captions")
@@ -77,13 +75,14 @@ def main(cfg : DictConfig) -> None:
         real_captions_path = []
 
     if use_labels:
-        real_labels_path = [str(r).replace("images","labels").replace("jpg","txt") for r in real_images_path]
+        real_labels_path = glob.glob(str(real_labels_path.absolute()) + f'/*')
+        real_labels_path.sort()
         if len(real_labels_path) != real_dataset_size:
             raise Exception("Cannot use a labels dataset of different size!")
         logger.info("Using labels")
     else:
         real_labels_path = []
-        
+
     cn_model = find_model_name(model_data['cn_use'], model_data['cn'])
     cn_model = (cn_model
                 if cn_model is not None
@@ -110,7 +109,6 @@ def main(cfg : DictConfig) -> None:
     logger.info(f'Results will be saved to {GEN_data}')
     # Generate from each image several synthetic images following the different prompts.
 
-    logger.info(f"{real_dataset_size*5} images will be generated")
     for idx in range(real_dataset_size):
         image_path = real_images_path[idx]
 
@@ -160,7 +158,8 @@ def main(cfg : DictConfig) -> None:
             logger.info(f'Image {image_path}: Exception during Extraction/SDCN', e)
 
         if (idx + 1) % 50 == 0:
-            logger.info(f"Generated {(idx + 1)*5} images ({(idx)/real_dataset_size * 100}%).")
+            logger.info(f"Treated {idx + 1} images ({(idx)/real_dataset_size * 100}%).")
+
 
 
 if __name__ == '__main__':

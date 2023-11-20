@@ -312,7 +312,7 @@ class Model:
         args = {**self.overrides, **custom, **kwargs, 'mode': 'export'}  # highest priority args on the right
         return Exporter(overrides=args, _callbacks=self.callbacks)(model=self.model)
 
-    def train(self, trainer=None, sampling=0, **kwargs):
+    def train(self, trainer=None, sampling=0, control_net="", ALsampling="", experiment="", **kwargs):
         """
         Trains the model on a given dataset.
 
@@ -338,6 +338,13 @@ class Model:
             self.trainer.model = self.trainer.get_model(weights=self.model if self.ckpt else None, cfg=self.model.yaml)
             self.model = self.trainer.model
         self.trainer.sampling = sampling
+        
+        control_net = control_net[:-3] if control_net[-2]=="." else control_net
+        if control_net == "real": 
+            control_net = "Starting_point"
+        wandb_config = {"control_net":control_net, "sampling":ALsampling, "experiment":experiment} # 
+        
+        self.trainer.wandb_config = wandb_config  # attach optional HUB session
         self.trainer.hub_session = self.session  # attach optional HUB session
         self.trainer.train()
         # Update model and cfg after training

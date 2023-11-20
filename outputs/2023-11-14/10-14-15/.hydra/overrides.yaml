@@ -1,0 +1,11 @@
+- iqa.abled=False
+- model.augmentation_percent=0.0
+- ml.augmentation_percent=0.0
+- model.cn_use=baseline2
+- active.abled=False
+- logs.sampling=baseline2
+- logs.experiment=baseline2
+- iqa.metric=clipiqa+
+- ml.baseline=True
+- ml.augmentation_percent_baseline=4.0
+- ml.epochs=300

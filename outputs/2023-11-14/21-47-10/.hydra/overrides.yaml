@@ -1,0 +1,3 @@
+- model.augmentation_percent=0.0
+- ml.augmentation_percent=0.0
+- model.cn_use=lllyasviel_openpose

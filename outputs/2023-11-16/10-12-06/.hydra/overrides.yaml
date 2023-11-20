@@ -1,0 +1,8 @@
+- model.augmentation_percent=0.0
+- ml.augmentation_percent=0.0
+- model.cn_use=crucible_mediapipe_face
+- active.abled=True
+- logs.experiment=active
+- logs.sampling=hung_coreset
+- active.rounds=6
+- active.sampling=coreset

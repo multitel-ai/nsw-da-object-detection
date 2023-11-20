@@ -267,7 +267,7 @@ class LoadImages:
             # Read image
             self.count += 1
             im0 = cv2.imread(path)  # BGR
-            im0 = self.pad(image=im0)
+            # im0 = self.pad(image=im0)
             if im0 is None:
                 raise FileNotFoundError(f'Image Not Found {path}')
             s = f'image {self.count}/{self.nf} {path}: '

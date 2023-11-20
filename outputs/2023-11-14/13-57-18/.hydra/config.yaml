@@ -1,0 +1,91 @@
+data:
+  base: data
+  real: real
+  generated: generated
+  datasets: datasets
+  image_formats:
+  - jpeg
+  - jpg
+ml:
+  val_nb: 300
+  test_nb: 300
+  train_nb: 250
+  augmentation_percent: 1.5
+  epochs: 300
+  augmentation_percent_baseline: 0
+  baseline: false
+prompt:
+  template: vocabulary
+  modify_captions: 1
+  generation_size: 10
+  base:
+  - Sandra Oh
+  - Kim Kardashian
+  - 'rihanna '
+  - taylor swift
+  quality: showing emotion, great realistic face, best quality, extremely detailed,
+  modifier: Happy man smiling
+  negative:
+  - monochrome, lowres, bad anatomy, worst quality, low quality, cartoon, unrealistic,
+    bad proportion,
+  - distortion, bad quality, lowres, cropped, bad focus, blurry, ad compression, bad
+    artifact,
+  - bad pixel, deformed iris, deformed pupils, semi-realistic, cgi, 3d, render, sketch,
+    drawing, anime:1.4),
+  - close up, cropped, out of frame, jpeg artifacts, ugly, duplicate, morbid, mutilated,
+  - extra fingers, mutated hands, poorly drawn hands, poorly drawn face, mutation,
+    deformed, blurry, dehydrated,
+  - extra limbs, cloned face, disfigured, gross proportions, malformed limbs, missing
+    arms, missing legs,
+  - extra arms, extra legs, fused fingers, too many fingers, long neck, no cars, no
+    people, illustration, painting,
+  - drawing, art, sketch, anime, deformation, distorsion
+  negative_simple: monochrome, lowres, bad anatomy, worst quality, low quality, cartoon,
+    unrealistic, bad proportion, disfigured, mutation, deformed mouth, deformed eyes,
+    unnatural teeth, unnatural eyes, unnatural mouth, unnatural face, unnatural face
+    expression, not human
+model:
+  use_captions: 1
+  use_labels: 0
+  augmentation_percent: 1.5
+  sd: runwayml/stable-diffusion-v1-5
+  cn_use: lllyasviel_openpose
+  cn:
+  - controlnet_segmentation: lllyasviel/sd-controlnet-seg
+  - lllyasviel_canny: lllyasviel/sd-controlnet-canny
+  - lllyasviel_scribble_canny: lllyasviel/sd-controlnet-scribble
+  - lllyasviel_openpose: lllyasviel/sd-controlnet-openpose
+  - fusing_openpose: fusing/stable-diffusion-v1-5-controlnet-openpose
+  - frankjoshua_openpose: frankjoshua/control_v11p_sd15_openpose
+  - crucible_mediapipe_face: CrucibleAI/ControlNetMediaPipeFace
+  cn_extra_settings:
+    crucible_mediapipe_face:
+      subfolder: diffusion_sd15
+  seed: 34567
+  device: cuda
+iqa:
+  device: cuda
+  metrics:
+  - brisque
+  - clipiqa+
+  - dbcnn
+  - niqe
+  - nima
+  abled: true
+  metric: clipiqa+
+active:
+  abled: false
+  rounds: 6
+  sel: 125
+  sampling: confidence
+logs:
+  sampling: clipiqa+_best
+  experiment: iqa
+plot:
+  weights_dir: weights_file/
+  name: random_sampling.png
+  yaml_file: data/real/data_controlnet_segmentation.yaml
+  entity: sdcn-nantes
+  project: sdcn-coco
+  metric: map
+map

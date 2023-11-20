@@ -14,7 +14,7 @@ ml:
   augmentation_percent: 0
   epochs: 300
   augmentation_percent_baseline: 0
-  baseline: True
+  baseline: False
 
 prompt:
   template: vocabulary
@@ -79,5 +79,22 @@ iqa:
 
 active:
   abled: False
-  rounds: 5
+  rounds: 6
   sel: 125  # 50 percent
+  sampling: confidence
+
+logs:
+  sampling: random
+  experiment: None
+
+plot: 
+  weights_dir: weights_file/
+  name: random_sampling.png
+  yaml_file: data/real/data_controlnet_segmentation.yaml 
+  entity: sdcn-nantes
+  project: sdcn-coco
+  metric: map
+  csv_path: result1.csv
+  control_net: lllyasviel_canny
+  plot_1: True
+  plot_from_csv: False

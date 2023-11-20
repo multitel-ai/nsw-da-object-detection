@@ -1,0 +1,6 @@
+- model.augmentation_percent=2.5
+- ml.augmentation_percent=2.5
+- model.cn_use=crucible_mediapipe_face
+- active.abled=False
+- active.sampling=baseline
+- ml.epochs=300

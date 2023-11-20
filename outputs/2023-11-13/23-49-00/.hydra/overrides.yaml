@@ -1,0 +1,7 @@
+- model.augmentation_percent=1.0
+- ml.augmentation_percent=1.0
+- model.cn_use=lllyasviel_openpose
+- active.abled=False
+- active.sampling=confidence
+- ml.epochs=300
+300

@@ -1,0 +1,11 @@
+- model.augmentation_percent=1.5
+- ml.augmentation_percent=1.5
+- model.cn_use=lllyasviel_canny
+- active.abled=False
+- iqa.abled=True
+- logs.sampling=brisque_best
+- logs.experiment=iqa
+- iqa.metric=brisque
+- ml.epochs=300
+00
+300

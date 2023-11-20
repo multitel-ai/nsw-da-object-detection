@@ -1,0 +1,8 @@
+- model.augmentation_percent=0.0
+- ml.augmentation_percent=0.0
+- model.cn_use=lllyasviel_canny
+- active.abled=True
+- logs.experiment=baseline
+- logs.sampling=baseline
+- active.rounds=11
+- active.sampling=baseline

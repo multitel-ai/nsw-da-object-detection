@@ -1,0 +1,11 @@
+- iqa.abled=False
+- model.augmentation_percent=3.0
+- ml.augmentation_percent=3.0
+- model.cn_use=lllyasviel_openpose
+- active.abled=False
+- logs.sampling=None
+- logs.experiment=None
+- iqa.metric=clipiqa+
+- ml.baseline=True
+- ml.augmentation_percent_baseline=3.0
+- ml.epochs=300

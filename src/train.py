@@ -1,3 +1,5 @@
+import sys
+sys.path.append('/home/ucl/elen/tgodelai/.local/lib/python3.9/site-packages') ; sys.path.pop(5) 
 
 import hydra
 import os
@@ -7,8 +9,7 @@ import yaml
 import wandb
 import numpy as np
 from pathlib import Path
-from omegaconf import DictConfig 
-from hungarian_algorithm import algorithm
+from omegaconf import DictConfig  
 import networkx as nx
 import torch.nn as nn
 import torch
@@ -117,30 +118,30 @@ def query_coreset(model, real_data, gen_data, data_yaml, sel, selected_path, fol
 
     U = [u.replace('\n','') for u in used_data]
     used_data = [u.split("/")[-1] for u in U] 
-    #real_data = [r for r in real_data if not str(r).split("/")[-1] in used_data]
+    real_data = [r for r in real_data if not str(r).split("/")[-1] in used_data]
     gen_data = [g for g in gen_data if not str(g).split("/")[-1] in used_data]
 
     model.model.query = True 
-    #real_features = [] 
-    gen_features = []
-    for i, p in enumerate(model.predict(source=gen_data)):
-         gen_features += [p.cpu().numpy()]
-    #for i, p in enumerate(model.predict(source=real_data)):
-    #    real_features += [p.cpu().numpy()]
+    real_features = [] 
+    # gen_features = []
+    # for i, p in enumerate(model.predict(source=gen_data)):
+    #     gen_features += [p.cpu().numpy()]
+    for i, p in enumerate(model.predict(source=real_data)):
+        real_features += [p.cpu().numpy()]
 
     # real images selection with AL
-    #coreset = Coreset_Greedy(real_features)
-    #real_idx_selected, max_distance = coreset.sample([], sel)
+    coreset = Coreset_Greedy(real_features)
+    real_idx_selected, max_distance = coreset.sample([], sel)
 
     # generated images selection with AL 
-    coreset = Coreset_Greedy(gen_features)
-    gen_idx_selected, max_distance = coreset.sample([], sel)
-    synt_dataset_selected = np.array(gen_data)[gen_idx_selected]
+    # coreset = Coreset_Greedy(gen_features)
+    # gen_idx_selected, max_distance = coreset.sample(used_data, sel)  #([], sel)
+    # synt_dataset_selected = np.array(gen_data)[gen_idx_selected]
     # synthetic images selection
-    #real_features = np.array(real_features)[real_idx_selected]
-    #print("START hungarian")
-    #synt_dataset_selected = find_closest(real_features, gen_data, model, feat=True)
-    #print("STOP  hungarian")
+    real_features = np.array(real_features)[real_idx_selected]
+    print("START hungarian")
+    synt_dataset_selected = find_closest(real_features, gen_data, model, feat=True)
+    print("STOP  hungarian")
     selected = [str(selected_path / s) for s in synt_dataset_selected]
     print("selected", selected); used_data = list(U) + selected
     if it==1 and False:
@@ -215,6 +216,48 @@ def query(model, real_data, gen_data, data_yaml, sel, selected_path, fold, it):
     with open(train, "w") as _file: #train
         _file.write("\n".join(used_data))
     print("STOP query")
+    
+def query_real(model, real_data, gen_data, data_yaml, sel, selected_path, fold, it):
+    print("START query")
+
+    used_data = None
+    with open(data_yaml, 'r') as _file:
+        used_data = yaml.safe_load(_file) 
+
+    old_train = used_data["train"] + ""
+    train = used_data["train"]
+    if not fold in train:
+        train = used_data["train"].replace("train", f"/{fold}/train_" + str(gen_data[0]).split("/")[-2])
+        
+    data_yaml_file = used_data
+    data_yaml_file["train"] = train
+    
+    with open(data_yaml, 'w') as _file:
+         yaml.dump(used_data, _file) 
+
+    with open(old_train, 'r') as _file: # train plutot que old_train
+        used_data = _file.readlines()
+
+    U = [u.replace('\n','') for u in used_data]
+    used_data = [u.split("/")[-1] for u in U] 
+    # real_data = [r for r in real_data if not str(r).split("/")[-1] in used_data]
+    gen_data = [g for g in real_data if not str(g).split("/")[-1] in used_data]
+ 
+    results_gen = np.array(gen_data)  
+    
+    model.model.query = True   
+    
+    selected = [str(selected_path / s) for s in results_gen[:sel]]
+    used_data = list(U) + selected
+    if it==1 and False:
+        data_yaml_file = used_data_
+        train = used_data_["train"].replace("train", f"{fold.split('/')[-1]}/train_" + str(gen_data[0]).split("/")[-2])
+        data_yaml_file["train"] = train; print("train it==1", train)
+        with open(data_yaml, 'w') as _file:
+            yaml.dump(data_yaml_file, _file)
+    with open(train, "w") as _file: #train
+        _file.write("\n".join(used_data))
+    print("STOP query")
 
 @hydra.main(version_base=None, config_path=f"..{os.sep}conf", config_name="config")
 def main(cfg: DictConfig) -> None:
@@ -238,12 +281,24 @@ def main(cfg: DictConfig) -> None:
 
     data_yaml_path = str(data_yaml_path.absolute())
     if active["abled"]: 
-        for _ in range(active['rounds']):
+        
+        if active["sampling"]=="confidence":
+            log_name = ""
+        elif active["sampling"]=="coreset":
+            log_name = "_coreset"
+        elif active["sampling"]=="baseline":
+            log_name = "_baseline"
+    
+        START = 0
+        if os.path.exists(model_path):
+            START = 1
+            
+        for _ in range(START, active['rounds']):
             name = "_".join(name_.split("_")[:-1]) + f"_active_{_}"
             if _==0: 
                 model = YOLO("yolov8n.yaml")
                 torch.save({"model":model.model.cpu()}, model_path)
-                train = '/'.join(str(data_yaml_path).split('/')[:-1]) + f"/active_{cn_use}"
+                train = '/'.join(str(data_yaml_path).split('/')[:-1]) + f"/active{log_name}_{cn_use}"
                 if os.path.isdir(train):
                     os.system(f"rm {train}/*") 
             
@@ -258,7 +313,7 @@ def main(cfg: DictConfig) -> None:
                 model.predictor = None
                 if _>=1: 
                     _data_yaml_path2 = _data_yaml_path.replace(".yaml", "_" + cn_use + ".yaml")
-                    fold = '/'.join(str(_data_yaml_path2).split('/')[:-1]) + f"/active_{cn_use}"; print("fold", fold) #f"active_corest_{cn_use}"
+                    fold = '/'.join(str(_data_yaml_path2).split('/')[:-1]) + f"/active{log_name}_{cn_use}"; print("fold", fold) #f"active_corest_{cn_use}"
                     _data_yaml_path2 = fold + "/" + str(_data_yaml_path2).split('/')[-1] # enlever le +"/"
                     print(f"data_yaml_path2 it=={_}", _data_yaml_path2) 
                     if not os.path.isdir(fold): 
@@ -273,14 +328,23 @@ def main(cfg: DictConfig) -> None:
                  
                 #print("QUERY CORESET")
                 #print("im real", os.listdir(Path(base_path)/data['real']/"coco/Coco_1FullPerson")[0])
-                query(model,  # _coreset
+                query_f = None
+                if active["sampling"]=="confidence":
+                    query_f = query
+                elif active["sampling"]=="coreset":
+                    query_f = query_coreset
+                elif active["sampling"]=="baseline":
+                    query_f = query_real
+                query_f(model,  # _coreset
                       [Path(base_path) / data['real'] / "coco/Coco_1FullPerson" / im for im in sorted(os.listdir(Path(base_path) / data['real'] / "coco/Coco_1FullPerson") )
                        if not im in os.listdir(Path(base_path) / data['real'] / "images")],  # on rajoute a chaque fois des images reelles?
+                      # [Path(base_path) / data['real'] / "coco/Coco_1FullPerson" / im for im in sorted(os.listdir(Path(base_path) / data['real'] / "coco/Coco_1FullPerson") )
+                      #  if not im in os.listdir(Path(base_path) / data['real'] / "images")],
                       [GEN_DATA_PATH / im for im in sorted(os.listdir(GEN_DATA_PATH))], 
-                      str(_data_yaml_path2),
+                      str(_data_yaml_path2), 
                       active['sel'],
                       Path("/auto/home/users/t/g/tgodelai/after_nantes/nsw-da-object-detection/"),
-                      f"active_{cn_use}", _)
+                      f"active{log_name}_{cn_use}", _)
                 print("end QUERY CORESET") 
     
             print("data_yaml_path2", _data_yaml_path2)   
@@ -289,15 +353,16 @@ def main(cfg: DictConfig) -> None:
                 sampling=0,
                 data = _data_yaml_path2,
                 epochs = cfg['ml']['epochs'],
-                project = 'sdcn',
-                # entity = 'sdcn-nantes',
+                project = 'sdcn-coco',
+                control_net=cn_use,
+                ALsampling=cfg['logs']['sampling'], 
+                experiment=cfg['logs']['experiment'],
                 name = name,
             )
             if not wandb.run is None:
                 wandb.run.finish()
             torch.save({"model":model.model.cpu()}, model_path)
         # os.system(f"rm {model_path}")
-
     elif cfg['ml']['baseline']:
        print("enter baseline loop")
        name = f"{uuid.uuid4().hex.upper()[0:6]}_baseline2_{str(cfg['ml']['augmentation_percent_baseline'])}" 
@@ -345,7 +410,10 @@ def main(cfg: DictConfig) -> None:
        model.train(
           data = str(Path(data_yaml_path_2).absolute()),
           epochs = cfg['ml']['epochs'],
-          project = 'sdcn',
+          project = 'sdcn-coco',
+          control_net=cn_use,
+          ALsampling=cfg['logs']['sampling'], 
+          experiment=cfg['logs']['experiment'],
           name = name
        )
 
@@ -355,8 +423,11 @@ def main(cfg: DictConfig) -> None:
         model.train(
             data = str(Path(data_yaml_path).absolute()),
             epochs = cfg['ml']['epochs'],
-            project = 'sdcn',
+            project = 'sdcn-coco',
             # entity = 'sdcn-nantes',
+            control_net=cn_use,
+            ALsampling=cfg['logs']['sampling'], 
+            experiment=cfg['logs']['experiment'],
             name = name_
         )
 

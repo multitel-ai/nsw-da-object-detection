@@ -1,0 +1,6 @@
+- model.augmentation_percent=0.0
+- ml.augmentation_percent=0.0
+- model.cn_use=baseline
+- active.abled=True
+- logs.experiment=baseline
+- logs.sampling=baseline

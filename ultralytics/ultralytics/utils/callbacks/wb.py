@@ -46,16 +46,13 @@ def on_pretrain_routine_start(trainer):
     test_images = sorted([img.replace('\n', '') for img in test_images])
     train_images_up = np.expand_dims(np.array(train_images), axis=1)
     val_images_up = np.expand_dims(np.array(val_images), axis=1)
-    test_images_up = np.expand_dims(np.array(test_images), axis=1)
-    control_net = yaml_file['train'].split("/")[-2]
-    control_net = control_net[:-3] if control_net[-2]=="." else control_net
-    if control_net == "real":
-        control_net = "Starting_point" # "baseline"  
-    # control_net = control_net + "_coreset" 
-    wandb_config = {"control_net":control_net, "data_size":len(train_images), "experiment":"IQA", "sampling":"clipiqa_best"} # , "experiment":"Active"
-    wandb_config = {**wandb_config, **vars(trainer.args)}
+    test_images_up = np.expand_dims(np.array(test_images), axis=1)  
+    
+    wandb_config = trainer.wandb_config 
+    wandb_config = {**wandb_config, "data_size":len(train_images), **vars(trainer.args)}
     wb.run or wb.init(project = trainer.args.project or 'YOLOv8', name = trainer.args.name, 
                       config = wandb_config, entity = "sdcn-nantes")
+                      
     table_train = wb.Table(columns=["Train_images"], data = train_images_up)
     table_val = wb.Table(columns=["Val_images"], data=val_images_up)
     table_test = wb.Table(columns=["Test_images"], data=test_images_up)

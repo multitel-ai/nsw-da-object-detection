@@ -226,7 +226,10 @@ def main_2(cfg: DictConfig) -> None:
            #scores, avg_score = adapt_metric(metric, scores, avg_score)
            #scores, avg_score = normalize(scores)
            sel = int(cfg['ml']['train_nb'] * cfg['model']['augmentation_percent'])
-           selected_idx = np.argsort(scores)[-sel:] #-sel:, :sel 
+           if metric == 'brisque':
+              selected_idx = np.argsort(scores)[:sel]
+           else:
+              selected_idx = np.argsort(scores)[-sel:] #-sel:, :sel 
            selected_images = list(np.array(image_paths)[selected_idx])
         with open(data_yaml_path, 'r') as _file:
             used_data_ = yaml.safe_load(_file) 
@@ -258,7 +261,10 @@ def main_2(cfg: DictConfig) -> None:
         model.train(
             data = str(Path(data_yaml_path2).absolute()),
             epochs = cfg['ml']['epochs'],
-            project = 'sdcn',
+            project = 'sdcn-coco',
+            control_net=cn_use,
+            ALsampling=cfg['logs']['sampling'], 
+            experiment=cfg['logs']['experiment'],
             # entity = 'sdcn-nantes',
             name = name
         )

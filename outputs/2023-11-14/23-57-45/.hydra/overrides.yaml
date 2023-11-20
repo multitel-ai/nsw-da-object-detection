@@ -1,0 +1,7 @@
+- model.augmentation_percent=1.5
+- ml.augmentation_percent=1.5
+- model.cn_use=lllyasviel_canny
+- active.abled=False
+- logs.experiment=baseline2
+- logs.sampling=baseline2
+- ml.baseline=True

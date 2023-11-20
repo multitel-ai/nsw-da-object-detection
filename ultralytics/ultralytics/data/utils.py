@@ -47,8 +47,8 @@ def img2label_paths(img_paths):
             label_path = Path(base_path) / 'val' / 'labels' / label_name
         elif 'test' in image:
             label_path = Path(base_path) / 'test' / 'labels' / label_name
-        else:
-            label_path = Path(base_path) / 'real' / 'labels' / label_name
+        else: 
+            label_path = Path(base_path) / 'real' / 'coco' / "Coco_1FullPerson_bbx" / label_name 
         label_paths += [str(label_path.absolute())]
 
     return label_paths

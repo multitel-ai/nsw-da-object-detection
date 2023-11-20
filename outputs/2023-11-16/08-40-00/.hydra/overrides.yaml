@@ -1,0 +1,3 @@
+- plot.name=src/plots/
+- plot.csv_path=result2.csv
+- plot.plot_from_csv=True

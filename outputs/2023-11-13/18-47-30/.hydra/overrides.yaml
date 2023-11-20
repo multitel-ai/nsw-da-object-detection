@@ -1,0 +1,9 @@
+- iqa.abled=True
+- model.augmentation_percent=2.0
+- ml.augmentation_percent=2.0
+- model.cn_use=crucible_mediapipe_face
+- active.abled=False
+- logs.sampling=brisque_best
+- logs.experiment=iqa
+- iqa.metric=brisque_best
+- ml.epochs=300

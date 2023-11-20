@@ -1,0 +1,9 @@
+- iqa.abled=True
+- model.augmentation_percent=0.5
+- ml.augmentation_percent=0.5
+- model.cn_use=crucible_mediapipe_face
+- active.abled=False
+- logs.sampling=nima_best
+- logs.experiment=iqa
+- iqa.metric=nima
+- ml.epochs=300

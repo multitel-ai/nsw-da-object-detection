@@ -1,0 +1,9 @@
+- model.augmentation_percent=1.5
+- ml.augmentation_percent=1.5
+- iqa.abled=True
+- model.cn_use=lllyasviel_canny
+- active.abled=False
+- logs.sampling=nima_best
+- logs.experiment=iqa
+- iqa.metric=nima
+- ml.epochs=300

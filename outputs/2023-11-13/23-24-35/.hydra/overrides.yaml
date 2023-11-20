@@ -1,0 +1,10 @@
+- model.augmentation_percent=2.0
+- ml.augmentation_percent=2.0
+- iqa.abled=True
+- model.cn_use=lllyasviel_canny
+- active.abled=False
+- logs.sampling=clipiqa+_best
+- logs.experiment=iqa
+- iqa.metric=clipiqa+
+- ml.epochs=300
+hs=300

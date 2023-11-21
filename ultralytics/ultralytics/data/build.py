@@ -151,7 +151,7 @@ def load_inference_source(source=None, imgsz=640, vid_stride=1, buffer=False):
     source, webcam, screenshot, from_img, in_memory, tensor = check_source(source)
     source_type = source.source_type if in_memory else SourceTypes(webcam, screenshot, from_img, tensor)
 
-    from_img = False
+    # from_img = False
     # Dataloader
     if tensor:
         dataset = LoadTensor(source)

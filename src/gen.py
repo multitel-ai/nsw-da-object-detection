@@ -66,7 +66,7 @@ def main(cfg : DictConfig) -> None:
     use_labels = bool(model_data['use_labels'])
 
     if use_captions:
-        real_captions_path = glob.glob(str(real_captions_path.absolute()) + f'/*')
+        real_captions_path = [r.replace("/captions/","/").replace(".jpg",".txt") for r in real_images] # glob.glob(str(real_captions_path.absolute()) + f'/*')
         real_captions_path.sort()
         if len(real_captions_path) != real_dataset_size:
             raise Exception("Cannot use a captions dataset of different size!")
@@ -155,6 +155,7 @@ def main(cfg : DictConfig) -> None:
                 img.save(GEN_data / f'{image_name}_{j + 1}.png')
 
         except Exception as e:
+            raise e 
             logger.info(f'Image {image_path}: Exception during Extraction/SDCN', e)
 
         if (idx + 1) % 50 == 0:

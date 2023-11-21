@@ -23,9 +23,10 @@ def find_model_name(name: str, l: List[Dict[str, str]]) -> Optional[str]:
     return None
 
 
-def read_caption(caption_path: str) -> List[str]:
+def read_caption(caption_path: str) -> List[str]: 
     with open(caption_path, 'r') as f:
-        lines = [line.strip() for line in f.readlines()]
+        lines = f.readlines() 
+        lines = [line.strip() for line in lines]
     return lines
 
 

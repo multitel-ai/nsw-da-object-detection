@@ -49,7 +49,7 @@ class Extractor:
             return Segmentation(**kwargs)
 
 
-class Segmentation:
+class FalseSegmentation:
     def __init__(self, **kwargs):
         self.model = YOLO("yolov8m-seg.pt")
 
@@ -62,6 +62,22 @@ class Segmentation:
         # seg_image = torch.t(result)
         seg_image = result[None, None, ...] # ToPILImage()(result[None, :])
         seg_image = torch.concat((seg_image, seg_image, seg_image), axis=1) 
+        
+        return seg_image
+        
+class Segmentation:
+    def __init__(self, **kwargs):
+        self.model = YOLO("yolov8m-seg.pt")
+
+    def extract(self, image: Image) -> Image:
+        image = np.array(image)
+
+        seg_image = self.model.predict(image)
+        seg_image = seg_image[0].masks[0].data[0]
+        
+        # seg_image = torch.t(result)
+        seg_image = torch.stack(3 * (seg_image,)) # 
+        seg_image = ToPILImage()(seg_image)
         
         return seg_image
 

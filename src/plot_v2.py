@@ -1,11 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Thu Aug 24 10:49:24 2023
-
-@author: tgodelaine
-"""
-
 import os
 import sys
 import argparse
@@ -14,10 +6,11 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import glob
 
-sys.path.append(os.path.join(sys.path[0], "yolov8"))
+# TODO: fix this, I do not like this at all
+sys.path.append(os.path.join(os.getcwd(), "ultralytics")) 
+from ultralytics import YOLO
 
 os.environ["N_real_images"] = "5000"
-from ultralytics import YOLO
 
 def plot(runs_weight_dir, file_name, yaml_path, entity, project, metric='map'):
     """
@@ -107,9 +100,3 @@ def run():
 
 if __name__ == '__main__':
     run()
-
-# Load a model
-#model = YOLO("yolov8n.yaml")
-
-# Use the model
-#model.train(data = '/Users/tgodelaine/Desktop/data/coco_0.yaml', epochs = 1)  # train the model

@@ -24,7 +24,7 @@ def main(cfg : DictConfig) -> None:
 
     real_images_path = REAL_data / 'images'
     real_captions_path = REAL_data / 'captions'
-    real_labels_path = REAL_data / 'labels'
+    # real_labels_path = REAL_data / 'labels'
 
     # Keep track of what feature was used for generation too in the name.
     GEN_data =  Path(base_path) / data['generated'] / cfg['model']['cn_use']
@@ -63,7 +63,7 @@ def main(cfg : DictConfig) -> None:
     sd_model = model_data['sd']
 
     use_captions = bool(model_data['use_captions'])
-    use_labels = bool(model_data['use_labels'])
+    # use_labels = bool(model_data['use_labels'])
 
     if use_captions:
         real_captions_path = glob.glob(str(real_captions_path.absolute()) + f'/*')
@@ -74,14 +74,14 @@ def main(cfg : DictConfig) -> None:
     else:
         real_captions_path = []
 
-    if use_labels:
-        real_labels_path = glob.glob(str(real_labels_path.absolute()) + f'/*')
-        real_labels_path.sort()
-        if len(real_labels_path) != real_dataset_size:
-            raise Exception("Cannot use a labels dataset of different size!")
-        logger.info("Using labels")
-    else:
-        real_labels_path = []
+    # if use_labels:
+    #     real_labels_path = glob.glob(str(real_labels_path.absolute()) + f'/*')
+    #     real_labels_path.sort()
+    #     if len(real_labels_path) != real_dataset_size:
+    #         raise Exception("Cannot use a labels dataset of different size!")
+    #     logger.info("Using labels")
+    # else:
+    #     real_labels_path = []
 
     cn_model = find_model_name(model_data['cn_use'], model_data['cn'])
     cn_model = (cn_model
@@ -113,7 +113,7 @@ def main(cfg : DictConfig) -> None:
         image_path = real_images_path[idx]
 
         caption_path = real_captions_path[idx] if use_captions else None
-        label_path = real_labels_path[idx] if use_labels else None
+        # label_path = real_labels_path[idx] if use_labels else None
 
         try:
             image = load_image(image_path)

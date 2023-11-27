@@ -1,28 +1,32 @@
 data:
+    # data paths and formats configuration :
+    # create data folder, and all other folders will be created automatically
     base: "data"
-    real: "real" # should contains images/, labels/, and captions/ (captions are optional)
+    real: "real" # Will contain images/, labels/, and captions/ (captions are optional)
     generated: "generated"
     datasets: "datasets"
     image_formats: ["jpeg", "jpg"]
 
-# put every parameter related to machine learning here: dataset size,
+# For the future : put every parameter related to machine learning here: dataset size,
 # ratio between train and test, learning rate ...
 ml:
+    # number of samples for training, validation, and test
     val_nb: 300
     test_nb: 300
     train_nb: 250
+    
     augmentation_percent: 0.1 # controls all aug percents parameters everywhere
-    augmentation_percent_baseline: 0
-    baseline: True
+    augmentation_percent_baseline: 0 # Ablation study augmentation => For paper only
     epochs: 300
-    sampling:
+    sampling: # IQA Sampling, check end of this yaml file for list of available metrics
+        # Telling the trainer to use IQA metrics already calculated to sample on best images for training
         enable: false
         metric: brisque # brisque (smaller is better), dbcnn (bigger is better), ilniqe (smaller is better)
         sample: best # to take smaller or bigger values is decided depending the metric
     
-    wandb:
-        entity: sdcn-nantes
-        project: sdcn-shit-testing
+    wandb: # SET wabdb parameters for run tracking and model logging
+        entity: your-wandb-username
+        project: sdcn-project
         download:
             list_all: false
             list_finished: true
@@ -33,12 +37,20 @@ ml:
             query_filter: false
 
 prompt:
+    # if use_captions is set to 1 in "model". A vocabulary will be used
+    # to modify the original captions and generate newer captions
+    # to create multiple diverse synthetic images from the same original image
     template: vocabulary
     modify_captions: 1
     generation_size: 10
+
+    # POSITIVE PROMPTS: THIS section is used if use_captions is set to 0 in "model"
+    # This section can be used if your dataset doesn't have captions already included
     base: ["Sandra Oh", "Kim Kardashian", "rihanna ", "taylor swift"]
     quality: "showing emotion, great realistic face, best quality, extremely detailed,"
     modifier: "Happy man smiling"
+    
+    # Best negative prompts were chosen for better image quality generation 
     negative:
         [
             "monochrome, lowres, bad anatomy, worst quality, low quality, cartoon, unrealistic, bad proportion,",
@@ -49,18 +61,29 @@ prompt:
             "extra limbs, cloned face, disfigured, gross proportions, malformed limbs, missing arms, missing legs,",
             "extra arms, extra legs, fused fingers, too many fingers, long neck, no cars, no people, illustration, painting,",
             "drawing, art, sketch, anime, deformation, distorsion",
-        ]
+        ] 
     negative_simple: "monochrome, lowres, bad anatomy, worst quality, low quality, cartoon, unrealistic, bad proportion, disfigured, mutation, deformed mouth, deformed eyes, unnatural teeth, unnatural eyes, unnatural mouth, unnatural face, unnatural face expression, not human"
 
 model:
-    use_captions: 1
-    use_labels: 0
-    augmentation_percent: 0 # not used at the moment anywhere
-    sd: runwayml/stable-diffusion-v1-5
-    cn_use: controlnet_segmentation
+    use_captions: 1 # use captions that come with the dataset
+    # use_labels: 0 # not used for now, will be used in future features
+    sd: runwayml/stable-diffusion-v1-5 # stable diffusion version
+    cn_use: controlnet_segmentation # control net to use from the list
     cn:
+        # YOU should list all the control nets that you would like to use here
+        # add an extractor name to the end in order to define which extractor to use :
+        # - _segmentation
+        # - _canny
+        # - _openpose
+        # - _mediapipe_face
+        # 
+        # All models listed below can be found on hugging face 
+
+        - controlled_false_segmentation: lllyasviel/sd-controlnet-seg # bad extractor, just for paper tests
+
         # Segmentation
         - controlnet_segmentation: lllyasviel/sd-controlnet-seg
+
         # Canny
         - lllyasviel_canny: lllyasviel/sd-controlnet-canny
         - lllyasviel_scribble_canny: lllyasviel/sd-controlnet-scribble
@@ -73,28 +96,23 @@ model:
         # MediaPipeFace
         - crucible_mediapipe_face: CrucibleAI/ControlNetMediaPipeFace
 
-        # Coming Soon !
-        # - depth: lllyasviel/sd-controlnet-depth
-        # - hed: lllyasviel/sd-controlnet-hed
-        # - normal: lllyasviel/sd-controlnet-normal
-        # - scribble: lllyasviel/sd-controlnet-scribble
-        # - segmentation: lllyasviel/sd-controlnet-seg
-        # - mlsd: lllyasviel/sd-controlnet-mlsd
-
-    cn_extra_settings:
+    cn_extra_settings: 
+        # In case your control net class takes in other parameters use this section to define them
         crucible_mediapipe_face:
             subfolder: diffusion_sd15
-    seed: 34567
-    device: cuda
+    seed: 34567 # random seed for SDCN generation
+    device: cuda # cpu or cuda ?
 
+# IQA METRICS SAMPLING :  Calculate all IQA metrics listed for all generated datasets
 iqa:
-    device: cuda
-    metrics: [brisque, dbcnn, nima, ilniqe]
+    device: cuda # cpu or cuda ?
+    metrics: [brisque, dbcnn, nima, ilniqe] # metrics to calculate scores
     # available metrics : brisque, clipiqa+, dbcnn, ilniqe, niqe, nima, cnniqa, nrqm, pi, ilniqe, niqe
     # read more on : https://github.com/chaofengc/IQA-PyTorch/blob/main/docs/ModelCard.md
-    abled: False
 
-active:
-    abled: False
-    rounds: 5
-    sel: 125 # 50 percent
+# ACTIVE LEARNING SAMPLING
+active: 
+    enable: False
+    rounds: 5 # rounds of AL 
+    sel: 125 # number of samples added each round
+    sampling: confidence # confidence, coreset, baseline (for ablation study)

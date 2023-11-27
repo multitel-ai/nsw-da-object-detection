@@ -28,6 +28,8 @@ def extract_model_from_name(raw_name: str) -> str:
         return 'canny'
     elif 'mediapipe' in raw_name:
         return 'mediapipe_face'
+    elif 'false_segmentation' in raw_name:
+        return 'false_segmentation'
     elif 'segmentation' in raw_name:
         return 'segmentation'
     else:
@@ -45,25 +47,42 @@ class Extractor:
             return Canny(**kwargs)
         elif 'mediapipe_face' in control_model:
             return MediaPipeFace(**kwargs)
+        elif 'false_segmentation' in control_model: # for paper
+            return FalseSegmentation(**kwargs)
         elif 'segmentation' in control_model:
-            return SegmentationYoloV8(**kwargs)
+            return Segmentation(**kwargs)
 
 
-class SegmentationYoloV8:
+class FalseSegmentation:
     def __init__(self, **kwargs):
         self.model = YOLO("yolov8m-seg.pt")
 
     def extract(self, image: Image) -> Image:
         image = np.array(image)
 
-        # Extract mask from prediction
         results = self.model.predict(image)
-        seg_image = results[0].masks[0].data[0]
+        result = results[0].masks[0].data[0]
+        
+        seg_image = torch.t(result)
+        seg_image = result[None, None, ...] # ToPILImage()(result[None, :])
+        seg_image = torch.concat((seg_image, seg_image, seg_image), axis=1) 
+        
+        return seg_image
+        
+class Segmentation:
+    def __init__(self, **kwargs):
+        self.model = YOLO("yolov8m-seg.pt")
 
-        # stack tensor to simulate RGB format
-        seg_image = torch.stack(3 * (seg_image,))
+    def extract(self, image: Image) -> Image:
+        image = np.array(image)
+
+        seg_image = self.model.predict(image)
+        seg_image = seg_image[0].masks[0].data[0]
+        
+        # seg_image = torch.t(result)
+        seg_image = torch.stack(3 * (seg_image,)) # 
         seg_image = ToPILImage()(seg_image)
-
+        
         return seg_image
 
 

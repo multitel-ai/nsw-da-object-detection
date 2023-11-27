@@ -59,10 +59,9 @@ class BaseModel(nn.Module):
             (torch.Tensor): The last output of the model.
         """
 
-        if hasattr(self, 'query'):
-            self.query = self.query
-        else:
+        if not hasattr(self, 'query'):
             self.query = False
+            
 
         if augment:
             return self._predict_augment(x)
